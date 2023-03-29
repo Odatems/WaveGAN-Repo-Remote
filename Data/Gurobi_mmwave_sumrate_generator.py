@@ -139,9 +139,9 @@ def solve_model(input_data,*args):
                     CNRmmWave=(GainX*GainY*(1/np.sqrt(PLA2G))**2)/(N0*BandwidthmmWave) #channel to noise ratio
                 
                 #============================================================================================================
-                coeff_matrix[tx_node,rx_node] = CNRmmWave #ComputeCNRmmWave(set_nodes_coord[i,tx_node,:], set_nodes_coord[i,rx_node,:]) # use x and y of the coordinates
-                coeff_matrix[rx_node,tx_node] = CNRmmWave #coeff_matrix[tx_node,rx_node] # since we symmetric matrix.
-                #print(coeff_matrix[rx_node,tx_node])
+                coeff_matrix[tx_node,rx_node] = CNRmmWave 
+                coeff_matrix[rx_node,tx_node] = CNRmmWave 
+               
             
                         
             # normalize between 0 and 1
