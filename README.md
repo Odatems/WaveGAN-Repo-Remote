@@ -6,3 +6,8 @@
 
       ***Where: --fun_type is 1 for *sum-rate* objective and 2 for *log-sum* objective***
 
+2. **To split the generated dataset, run the following command:**
+
+      `python Gurobi_data_splitter.py --num_nodes {Number of Nodes} --val_size {validation dataset size} --test_size {testing dataset size} --filename {file to split}`
+
+3. 
