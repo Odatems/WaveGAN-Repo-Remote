@@ -63,9 +63,13 @@ def solve_model(input_data,*args):
     
     with gp.Env() as env, gp.Model(env=env) as m: 
     
-        core_id,num_nodes, set_nodes_coord = input_data
+        fun_type,core_id,num_nodes, set_nodes_coord = input_data
         num_samples = set_nodes_coord.shape[0]
-        filename =  f"Gurobi_mmwave{num_nodes}_sumrate_obj_core{core_id}.txt"
+        
+        if(fun_type == 1): # sum-rate
+            filename =  f"Gurobi_mmwave{num_nodes}_sumrate_obj_core{core_id}.txt"
+        elif(funtype==2): # log-sum
+            filename =  f"Gurobi_mmwave{num_nodes}_logsum_obj_core{core_id}.txt"
         
         # Step 1: Define the model 
         m = gp.Model() # tested with Python 3.7 & Gurobi 9.0.0
@@ -148,7 +152,11 @@ def solve_model(input_data,*args):
             coeff_matrix_normalized = (coeff_matrix - np.min(coeff_matrix))/(np.max(coeff_matrix) - np.min(coeff_matrix))#*100
            
             rate_values = bandwidth*np.log2(1+power*coeff_matrix_normalized)*1e-8
-            dist = {(tx_node, rx_node):  -rate_values[tx_node,rx_node] for tx_node, rx_node in combinations(nodes, 2)} # create dictionary of variables
+            if(fun_type==1): # sum-rate
+                dist = {(tx_node, rx_node):  -rate_values[tx_node,rx_node] for tx_node, rx_node in combinations(nodes, 2)} # create dictionary of variables
+            elif(fun_type == 2): # sum-log
+                dist = {(tx_node, rx_node):  -np.log(rate_values[tx_node,rx_node]) for tx_node, rx_node in combinations(nodes, 2)} # create dictionary of variables
+                
             
             # Step 3: Solve using Gurobi Solver. 
            
@@ -206,11 +214,12 @@ if __name__ == '__main__':
     parser.add_argument("--max_h", type=int, default=500)
     parser.add_argument("--max_y", type=int, default=500)
     parser.add_argument("--max_x", type=int, default=500)
+    parser.add_argument("--fun_type", type=int, default=1)
     opts = parser.parse_args()
     
     
     # Generate random coordinates
-    min_x = 0 
+    min_x = 0  
     min_y = 0  
     min_h = 0 
     procs = [] 
@@ -227,7 +236,7 @@ if __name__ == '__main__':
     for i in range(opts.num_cores):
         
         
-        process = mp.Process(target=solve_model,args= [(i,opts.num_nodes,set_nodes_coord[(i*data_per_core)+shift_val:((i+1)*data_per_core)+shift_val])])
+        process = mp.Process(target=solve_model,args= [(opts.fun_type,i,opts.num_nodes,set_nodes_coord[(i*data_per_core)+shift_val:((i+1)*data_per_core)+shift_val])])
         procs.append(process)
         process.start()
    
