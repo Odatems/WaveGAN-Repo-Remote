@@ -50,7 +50,7 @@ def solve_model(input_data,*args):
 
     if fun_type == 1:
         filename = f"Concorde_mmwave{num_nodes}_sumrate_obj_core{i}.txt"
-    elif fun_type == 2
+    elif fun_type == 2:
         filename = f"Concorde_mmwave{num_nodes}_sumrate_obj_core{i}.txt"
     
     for i in range(num_samples): 
