@@ -34,7 +34,7 @@ The generated files are: Gurobi_mmwave{num_nodes}_val_data.txt, Gurobi_mmwave{nu
 The name of the file generated is inserted using --filename or by default "Gurobi_mmwave{num_nodes}_sumrate_obj.txt". The base file is the first file in the list to read from. By default it is "Gurobi_mmwave{num_nodes}_sumrate_obj_core0.txt"
 
 
-## Concorde Dataset Generation
+## Matrix-Based Concorde Dataset Generation
 The package used to generate using Concorde is a modified version of [PyConcorde](https://github.com/jvkersch/pyconcorde.git). The code include the capability to solve the problem based on cost matricies or nodes coordinates. 
 
 
