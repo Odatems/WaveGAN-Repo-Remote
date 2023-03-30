@@ -47,14 +47,12 @@ cd /Data/mmWave_Data/Concorde_based_data
 git clone https://github.com/jvkersch/pyconcorde
 
 ```
-
 Next, replace **tsp.py** and **_concorde.pyx** in pyconcorde/concorde with same files in /Data/mmWave_Data/Concorde_based_data. Then execute the following commands: 
 
 ```
 cd pyconcorde
 pip install -e .
 cd ..
-
 ```
 Run the data generation script:
 
