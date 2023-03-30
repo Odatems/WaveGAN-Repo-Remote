@@ -31,4 +31,9 @@
 
 
 ## Concorde Dataset Generation
+To generate datasets using Concorde, run the following command:
+```
+python Concorde_mmwave_dataset_generator.py --num_nodes {Number of nodes} --num_cores {Number of cores on the machine} --node_dim {dimension of the coordinates} --num_samples {dataset size} --max_h {maximum height} --max_y {y-limit of the deployment region} --max_x {x-limit of the deployment region} --fun_type {} --file_name {the file name that contains the generated dataset}
+```
 
+    
