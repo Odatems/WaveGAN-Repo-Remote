@@ -42,12 +42,20 @@ The package used to generate using Concorde is a modified version of [PyConcorde
 
 To generate datasets using Concorde, run the following command: </br>
 
-
-cd Data/
+```
+cd /Data/mmWave_Data/Concorde_based_data
 git clone https://github.com/jvkersch/pyconcorde
+
+```
+
+Next, replace tsp.py and _concorde.pyx in pyconcorde/concorde with same files in /Data/mmWave_Data/Concorde_based_data. Then execute the following commands: 
+
+```
 cd pyconcorde
 pip install -e .
 cd ..
+
+```
 
 # Run the data generation script
 python generate_tsp_concorde.py --num_samples <num-sample> --num_nodes <num-nodes>
