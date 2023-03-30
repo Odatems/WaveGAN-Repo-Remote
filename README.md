@@ -31,9 +31,12 @@
 
 
 ## Concorde Dataset Generation
-To generate datasets using Concorde, run the following command:
+The package used to generate using Concorde is a modified version of [PyConcorde](https://github.com/jvkersch/pyconcorde.git). The code include the capability to solve the problem based on cost matricies or nodes coordinates. 
+
+</br>
+
+To generate datasets using Concorde, run the following command: </br>
 ```
 python Concorde_mmwave_dataset_generator.py --num_nodes {Number of nodes} --num_cores {Number of cores on the machine} --node_dim {dimension of the coordinates} --num_samples {dataset size} --max_h {maximum height} --max_y {y-limit of the deployment region} --max_x {x-limit of the deployment region} --fun_type {} --file_name {the file name that contains the generated dataset}
 ```
 
-    
