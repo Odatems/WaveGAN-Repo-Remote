@@ -58,9 +58,7 @@ pip install -e .
 cd ..
 
 ```
-
-# Run the data generation script
-python generate_tsp_concorde.py --num_samples <num-sample> --num_nodes <num-nodes>
+Run the data generation script:
 
 ```
 python Concorde_mmwave_dataset_generator.py --num_nodes {Number of nodes} --num_cores {Number of cores on the machine} --node_dim {dimension of the coordinates} --num_samples {dataset size} --max_h {maximum height} --max_y {y-limit of the deployment region} --max_x {x-limit of the deployment region} --fun_type {} --file_name {the file name that contains the generated dataset}
