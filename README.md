@@ -1,8 +1,6 @@
 # WaveGAN 
 ## Overview
 
-## Pre-requisite packages
-
 
 ## Gurobi Dataset Generation 
 1. **To generate dataset using Gurobi, run any of the following commands based on the objective:**
