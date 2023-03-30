@@ -37,9 +37,21 @@ The name of the file generated is inserted using --filename or by default "Gurob
 ## Concorde Dataset Generation
 The package used to generate using Concorde is a modified version of [PyConcorde](https://github.com/jvkersch/pyconcorde.git). The code include the capability to solve the problem based on cost matricies or nodes coordinates. 
 
+
 </br>
 
 To generate datasets using Concorde, run the following command: </br>
+
+
+cd Data/
+git clone https://github.com/jvkersch/pyconcorde
+cd pyconcorde
+pip install -e .
+cd ..
+
+# Run the data generation script
+python generate_tsp_concorde.py --num_samples <num-sample> --num_nodes <num-nodes>
+
 ```
 python Concorde_mmwave_dataset_generator.py --num_nodes {Number of nodes} --num_cores {Number of cores on the machine} --node_dim {dimension of the coordinates} --num_samples {dataset size} --max_h {maximum height} --max_y {y-limit of the deployment region} --max_x {x-limit of the deployment region} --fun_type {} --file_name {the file name that contains the generated dataset}
 ```
