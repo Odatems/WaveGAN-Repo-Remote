@@ -710,8 +710,8 @@ if __name__ == "__main__":
     parser.add_argument("--train_dataset_size",type=int,default=1e6)
     parser.add_argument("--valid_dataset_size",type=int,default=1e4)
     parse.add_argument("--testing_datset_size", type=int,default = 1e4)
-    parser.add_argument("load_best_train", type = bool,default=True)
-    parser.add_argument("load_best_test", type = bool,default=True)
+    parser.add_argument("--load_best_train", type = bool,default=True)
+    parser.add_argument("--load_best_test", type = bool,default=True)
     parser.add_argument("--pretrained",type=bool,default=False)
     parser.add_argument("--n_epochs",type=int,default=100)
     parser.add_argument("--beam_size",type=int,default=1024)
@@ -719,7 +719,7 @@ if __name__ == "__main__":
     opts = parser.parse_args()
     # if the filee names are not specified
     if train_filepath ==None:
-        train_filepath = f"mmwave{num_nodes}_gurobi_multi_proc.txt"
+        train_filepath = f"mmwave{num_nodes}_Gurobi_multi_proc.txt"
     
     if val_filepath == None:
         val_filepath = f"mmwave{num_nodes}_val_Gurobi_multi_proc.txt"
