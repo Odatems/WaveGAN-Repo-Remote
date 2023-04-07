@@ -60,7 +60,7 @@ python Concorde_mmwave_dataset_generator.py --num_nodes {Number of nodes} --num_
 
 ## To train the model, for example for 20 node, run the folowing script:
 ```
-python mmWaveGAN_20_nodes.py
+python mmWaveGAN_20_nodes.py --num_nodes {num_nodes} --train_filepath {training dataset} --val_filepath {validation dataset} --test_filepath {testing dataset}  --train_dataset_size {The size of the training dataset} --valid_dataset_size {size of the validation dataset} --testing_datset_size {size of the testing dataset} --load_best_train {True: if the best trainig weights are loaded} --load_best_test {True: if the model is to be tested based on the best weights} --pretrained {True: if the model initialization is based on previously trained model} --n_epochs {Number of training epochs} --beam_siz {beam size used in the beam search step}
 ```
 
 Note that the data reader used inside the code depends on the type of the solver used to gerneate the data. 
