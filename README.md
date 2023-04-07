@@ -59,8 +59,8 @@ python Concorde_mmwave_dataset_generator.py --num_nodes {Number of nodes} --num_
 ```
 
 ## To train the model for example for 20 node, run the folowing script:
-'''
+```
 python mmWaveGAN_20_nodes.py
-'''
+```
 
 Note that the data reader used inside the code depends on the type of the solver used to gerneate the data. 
