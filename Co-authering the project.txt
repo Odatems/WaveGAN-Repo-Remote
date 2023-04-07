@@ -1,0 +1,4 @@
+1. Download the project 
+2. Navigate to the directory of the project 
+3. git pull origin main --allow-unrelated-histories
+4. 
