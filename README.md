@@ -58,3 +58,9 @@ Run the data generation script:
 python Concorde_mmwave_dataset_generator.py --num_nodes {Number of nodes} --num_cores {Number of cores on the machine} --node_dim {dimension of the coordinates} --num_samples {dataset size} --max_h {maximum height} --max_y {y-limit of the deployment region} --max_x {x-limit of the deployment region} --fun_type {} --file_name {the file name that contains the generated dataset}
 ```
 
+## To train the model for example for 20 node, run the folowing script:
+'''
+python mmWaveGAN_20_nodes.py
+'''
+
+Note that the data reader used inside the code depends on the type of the solver used to gerneate the data. 
