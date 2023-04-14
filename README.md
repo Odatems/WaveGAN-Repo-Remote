@@ -58,7 +58,7 @@ Run the data generation script:
 python Concorde_mmwave_dataset_generator.py --num_nodes {Number of nodes} --num_cores {Number of cores on the machine} --node_dim {dimension of the coordinates} --num_samples {dataset size} --max_h {maximum height} --max_y {y-limit of the deployment region} --max_x {x-limit of the deployment region} --fun_type {} --file_name {the file name that contains the generated dataset}
 ```
 
-## To train the model, for example for 20 node, run the folowing script:
+## To train the model, for example for 20 nodes, run the folowing script:
 ```
 python mmWaveGAN_20_nodes.py --num_nodes {num_nodes} --train_filepath {training dataset} --val_filepath {validation dataset} --test_filepath {testing dataset}  --train_dataset_size {The size of the training dataset} --valid_dataset_size {size of the validation dataset} --testing_datset_size {size of the testing dataset} --load_best_train {True: if the best trainig weights are loaded} --load_best_test {True: if the model is to be tested based on the best weights} --pretrained {True: if the model initialization is based on previously trained model} --n_epochs {Number of training epochs} --beam_siz {beam size used in the beam search step}
 ```
