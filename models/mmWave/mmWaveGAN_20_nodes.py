@@ -219,7 +219,11 @@ def load_dataset(train_filepath,val_filepath,num_nodes = 20,train_dataset_size =
 #                                                   Training function                                                      #
 #===========================================================================================================================
 
+<<<<<<< HEAD
 def train_model(gen,crit,num_nodes,train_filepath,val_filepath,train_dataset_size,valid_dataset_size,n_epochs,pretrained=False,load_best=True):
+=======
+def train_model(gen,crit,train_filepath,val_filepath,train_dataset_size,valid_dataset_size,n_epochs,pretrained=False,load_best=True):
+>>>>>>> c5b4c2c0f3904c223d61f0c2f3abd26d4d1cb173
   
     '''
     train_filepath: is the file containig training dataset
@@ -707,9 +711,15 @@ if __name__ == "__main__":
     parser.add_argument("--train_filepath", type=int, default=None)
     parser.add_argument("--val_filepath", type=str, default=None)
     parser.add_argument("--test_filepath", type=str, default=None)
+<<<<<<< HEAD
     parser.add_argument("--train_dataset_size",type=int,default=1000000)
     parser.add_argument("--valid_dataset_size",type=int,default=1000000)
     parser.add_argument("--testing_datset_size", type=int,default = 1000000)
+=======
+    parser.add_argument("--train_dataset_size",type=int,default=1e6)
+    parser.add_argument("--valid_dataset_size",type=int,default=1e4)
+    parse.add_argument("--testing_datset_size", type=int,default = 1e4)
+>>>>>>> c5b4c2c0f3904c223d61f0c2f3abd26d4d1cb173
     parser.add_argument("--load_best_train", type = bool,default=True)
     parser.add_argument("--load_best_test", type = bool,default=True)
     parser.add_argument("--pretrained",type=bool,default=False)
@@ -718,6 +728,7 @@ if __name__ == "__main__":
     
     opts = parser.parse_args()
     # if the filee names are not specified
+<<<<<<< HEAD
     if opts.train_filepath ==None:
         opts.train_filepath = f"mmwave{opts.num_nodes}_gurobi_multi_proc.txt"
     
@@ -726,6 +737,16 @@ if __name__ == "__main__":
         
     if opts.test_filepath ==  None:
         opts.test_filepath = f"mmwave{opts.num_nodes}_test_Gurobi_multi_proc.txt"
+=======
+    if train_filepath ==None:
+        train_filepath = f"mmwave{num_nodes}_Gurobi_multi_proc.txt"
+    
+    if val_filepath == None:
+        val_filepath = f"mmwave{num_nodes}_val_Gurobi_multi_proc.txt"
+        
+    if test_filepath ==  None:
+        test_filepath = f"mmwave{num_nodes}_test_Gurobi_multi_proc.txt"
+>>>>>>> c5b4c2c0f3904c223d61f0c2f3abd26d4d1cb173
         
         
     display_step = 1000
@@ -749,6 +770,7 @@ if __name__ == "__main__":
     with open('Model_results_summary.txt',"a" , encoding="utf-8") as f:
         
         f.write('Model Parameters')
+<<<<<<< HEAD
         f.write("Number of epochs = " + str(opts.n_epochs))
         f.write("Pretrained = " + str(opts.pretrained))
         f.write("Pre-trained with best = " + str(opts.load_best_train))
@@ -760,3 +782,20 @@ if __name__ == "__main__":
     status = 'train'
     plot_model_results(np.asarray(val_mse,status)) 
     
+=======
+        f.write("Number of epochs = " + str(n_epochs))
+        f.write("Pretrained = " + str(pretrained))
+        f.write("Pre-trained with best = " + str(load_best_train))
+        f.write("Tested with best = " + str(load_best_test))
+       
+        
+    gen,val_mse = train_model(gen,crit,train_filepath,val_filepath,train_dataset_size,valid_dataset_size,n_epochs,pretrained,load_best_train)
+    model_testing(gen,num_nodes, testing_datset_size, beam_size,test_filepath,load_best_test)
+    status = 'train'
+    plot_model_results(np.asarray(val_mse,status)) 
+    
+       
+#===============================================================================
+
+
+>>>>>>> c5b4c2c0f3904c223d61f0c2f3abd26d4d1cb173
