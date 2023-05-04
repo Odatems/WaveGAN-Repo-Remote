@@ -18,7 +18,16 @@ import networkx as nx
 
 
 rng = default_rng()
-
+if torch.cuda.is_available():
+    #print("CUDA available, using GPU ID {}".format(config.gpu_id))
+    dtypeFloat = torch.cuda.FloatTensor
+    dtypeLong = torch.cuda.LongTensor
+    torch.cuda.manual_seed(1)
+else:
+    print("CUDA not available")
+    dtypeFloat = torch.FloatTensor
+    dtypeLong = torch.LongTensor
+    torch.manual_seed(1)
 
 
 
@@ -166,9 +175,9 @@ def get_crit_loss(crit_fake_pred, crit_real_pred, gp, c_lambda):
 
 # -------------------Dataset Preparation ------------------------------------
 
-def load_dataset(train_filepath,val_filepath,num_nodes = 20,train_dataset_size = 1e10, valid_dataset_size_all = 10000):
+def load_dataset(train_filepath,val_filepath,num_nodes = 20,train_dataset_size = 1000000, valid_dataset_size_all = 10000):
     
-    
+   
     num_neighbors= -1
     batch_size= 1
     # Read training dataset 
@@ -219,11 +228,7 @@ def load_dataset(train_filepath,val_filepath,num_nodes = 20,train_dataset_size =
 #                                                   Training function                                                      #
 #===========================================================================================================================
 
-<<<<<<< HEAD
-def train_model(gen,crit,num_nodes,train_filepath,val_filepath,train_dataset_size,valid_dataset_size,n_epochs,pretrained=False,load_best=True):
-=======
-def train_model(gen,crit,train_filepath,val_filepath,train_dataset_size,valid_dataset_size,n_epochs,pretrained=False,load_best=True):
->>>>>>> c5b4c2c0f3904c223d61f0c2f3abd26d4d1cb173
+def train_model(gen,crit,num_nodes,batch_size,train_filepath,val_filepath,train_dataset_size,valid_dataset_size,n_epochs,pretrained=False,load_best=True):
   
     '''
     train_filepath: is the file containig training dataset
@@ -234,7 +239,8 @@ def train_model(gen,crit,train_filepath,val_filepath,train_dataset_size,valid_da
     '''
     
     X_train, z_norm,validation_set_sample,z_norm_valid  = load_dataset(train_filepath,val_filepath,num_nodes,train_dataset_size, valid_dataset_size)
-    
+    print(X_train.shape)
+    scale_factor = 1
     #train_dataset_size = X_train.shape[0] #train_dataset_size: Size of the training data
     #valid_dataset_size = validation_set_sample.shape[0]
     batch_index = [n for n in range(0, train_dataset_size, batch_size)]
@@ -246,8 +252,8 @@ def train_model(gen,crit,train_filepath,val_filepath,train_dataset_size,valid_da
     scale_factor = 1 # just if the epochs needs to be increased
     generator_losses_epoch=[]
     critic_losses_epoch = []
-    
-    
+    step = 0
+    tick_width = 50
     #mse_val = np.zeros((scale_factor*n_epochs, 1))
     mse_val = []
     mse_per_inst_val = np.zeros((scale_factor*n_epochs, valid_dataset_size))
@@ -290,13 +296,19 @@ def train_model(gen,crit,train_filepath,val_filepath,train_dataset_size,valid_da
         epoch = checkpoint_D['epoch']
         critic_losses = checkpoint_D['Loss']
         
-        
-        
-    start = time.time()   
+    with open('Model_results_summary.txt',"a" , encoding="utf-8") as f:
+       
+       f.write('Training Results statistics')
+       f.write("Number of nodes = " + str(num_nodes))
+       f.write("Number of training samples = " + str(train_dataset_size))
+       f.write("Number of validation samples = " + str(valid_dataset_size))
+       
+    print('Training over epochs started ....')
+    start = time.time()
     mse_best = 100 # best mse encountered so far in case to continue training
     # training loop over all dataset
     for epoch in range(scale_factor*n_epochs):
-        torch.cuda.empty_cache()
+        #torch.cuda.empty_cache()
         end_index = 0
         start_index = end_index # find the starting point of the current batch       
         # training loop
@@ -316,7 +328,7 @@ def train_model(gen,crit,train_filepath,val_filepath,train_dataset_size,valid_da
            z = z_norm[idx] #
            z = torch.from_numpy(z).float()
            z = z.to(device)
-
+           
            mean_iteration_critic_loss = 0
            for _ in range(crit_repeats):
     
@@ -355,7 +367,7 @@ def train_model(gen,crit,train_filepath,val_filepath,train_dataset_size,valid_da
            # The code display the results every num_examples by dividing it into chunks of step_size and average over the whole block
            if step % display_step == 0 and step > 0:
                
-               tick_width = 50
+               
                gen_mean = sum(generator_losses[-display_step:]) / display_step # This is the moving average every dispay step 
                crit_mean = sum(critic_losses[-display_step:]) / display_step
                print(f"Step {cur_step}: Generator loss: {gen_mean}, critic loss: {crit_mean}")
@@ -397,7 +409,7 @@ def train_model(gen,crit,train_filepath,val_filepath,train_dataset_size,valid_da
         valid_set_sample = validation_set_sample[:]
         zzz = np.zeros((1,1,num_nodes,num_nodes))
         gen = gen.to('cpu')
-       
+        print('start validation')
         for i in range(valid_dataset_size): # Loop for all instances in the dataset; valid_dataset_size_all
          
           zzz[0,:,:,:] = z_norm_valid[i] 
@@ -411,15 +423,16 @@ def train_model(gen,crit,train_filepath,val_filepath,train_dataset_size,valid_da
           difference_array = np. subtract(array2, array1)
           squared_array = np. square(difference_array)
           mse_per_inst_val[epoch] = squared_array.mean()
-         
+          
        
         #mse_val[epoch] = mse_per_inst_val[epoch,:].mean()
-        mse_val.append( mse_per_inst_val[epoch,:].mean())
-        
-        print(f'Epoch {i}/{n_epoch}:----training mse = , validation mse = {mse_val[epoch]}, Generator loss: {gen_mean}, critic loss: {crit_mean}')
+        mse_val.append(mse_per_inst_val[epoch,:].mean())
+        with open('Model_results_summary.txt',"a" , encoding="utf-8") as f:
+            f.write("Validation mean square error = "+ str(mse_val[epoch])) # store the validation mean square error 
+        print(f'Epoch {epoch}/{n_epochs}:----training mse = , validation mse = {mse_val[epoch]}, Generator loss: {np.array(generator_losses_epoch).mean()}, critic loss: {np.array(critic_losses_epoch).mean()}')
         
         if (epoch>0):# if this is not the first epoch
-       
+        
             if (mse_val[epoch] < mse_best):
                 mse_best = mse_val[epoch]
                # save the generator model 
@@ -478,14 +491,10 @@ def train_model(gen,crit,train_filepath,val_filepath,train_dataset_size,valid_da
     
     end_time = time.time() - start
     with open('Model_results_summary.txt',"a" , encoding="utf-8") as f:
+        f.write("best mse found = " + str(mse_best))
+        f.write("training time = " + str(end_time))
+    
        
-       f.write('Training Results statistics')
-       f.write("Number of nodes = " + str(num_nodes))
-       f.write("Number of training samples = " + str(testing_datset_size))
-       f.write("Number of validation samples = " + str(valid_dataset_size))
-       f.write("training time = " + str(end_time))
-       f.write("best mse found = " + str(mse_best))
-       f.write("Vlidation mean square error = ", str(mse_val) ) # store the validation mean square error 
        
     return gen, mse_val
 
@@ -515,6 +524,8 @@ def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_file
     tour_is_valid = np.zeros((testing_datset_size,1))
     gen_tour_len = np.zeros((testing_datset_size,1))
     optimality_gap = np.zeros((testing_datset_size,1))
+    optimality_gap_in_cost = np.zeros((testing_datset_size,1))
+    optimality_gap_in_thr = np.zeros((testing_datset_size,1))
     gen_tour_len_beam_search = np.zeros((testing_datset_size,1))
     path_len_gap_beam_search =  np.zeros((testing_datset_size,1))
     generated_final_tour = np.zeros((testing_datset_size,num_nodes))
@@ -585,7 +596,7 @@ def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_file
         zzz_test = zzz_test.to(device)
         xxx[0,:,:,:] = xx_test[i+shift_index]
         xxx_test = torch.from_numpy(xxx).float()
-        xxx_test = xxx_valid.to(device)       
+        xxx_test = xxx_test.to(device)       
         
         fake_test = gen(zzz_test) 
         y_preds = fake_test[:,:,:,:]#.
@@ -646,11 +657,11 @@ def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_file
         rate_values[k+1] = bandwidth*np.log2(1+power*cnr)
         Gurobi_optimal_rate[i] = np.min(rate_values)
         
-        optimality_gap_in_thr[i] =  np.absolute(1 - (rate_values[cur_node_to_investigate+shift_index]/rate_values_gen[i])) 
+        optimality_gap_in_thr[i] =  np.absolute(1 - (Gurobi_optimal_rate[i]/optimal_rate[i])) 
         optimality_gap_in_thr[i] = optimality_gap_in_thr[i]*100
        
     end_time =  time.time() - start
-    device = 'cuda'
+    #device = 'cuda'
     print(f'End of the testing phase; Optimality gap in cost values = {np.mean(optimality_gap_in_cost)}, Optimality gap in throughput = {np.mean(optimality_gap_in_thr)}')
     
     with open('Model_results_summary.txt',"a" , encoding="utf-8") as f:
@@ -660,9 +671,9 @@ def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_file
        f.write("Number od testing samples = " + str(testing_datset_size))
        f.write("Beam size = " + str(beam_size))
        f.write("Testing time = " + str(end_time))
-       f.write("Optimality gap in throughput = ", str(np.mean(optimality_gap_in_thr)))
-       f.write("Optimality gap in cost matrix values = ", str((np.mean(optimality_gap_in_cost)))) # this might be different because of the differences in the cost matrix 
-       f.write("Final netowrk topology = ", str(final_tour)) # the final tour generated after beam search
+       f.write("Optimality gap in throughput = "+ str(np.mean(optimality_gap_in_thr)))
+       f.write("Optimality gap in cost matrix values = "+ str((np.mean(optimality_gap_in_cost)))) # this might be different because of the differences in the cost matrix 
+       f.write("Final netowrk topology = "+ str(final_tour)) # the final tour generated after beam search
 
 #==============================================================================
 #                   plot results
@@ -671,11 +682,11 @@ def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_file
 def plot_model_results(mse_val,status):
     
     # plot the mse of the validation over epochs 
-    plt.plot(mse_va, linewidth = 2)
+    plt.plot(mse_val, linewidth = 2)
     plt.title('MSE over iterations during' + status, fontsize = 14)
     plt.xlabel('Epoch number',fontsize = 14)
     plt.ylabel('MSE',fontsize = 14)
-    xticks(np.arange(0, mse_val.shape[0], step=1))  # Set label locations.
+    #xticks(np.arange(0, mse_val.shape[0], step=1))  # Set label locations.
     plt.xticks(np.arange(0, mse_val.shape[0], step=1))
     plt.show()
     
@@ -711,24 +722,17 @@ if __name__ == "__main__":
     parser.add_argument("--train_filepath", type=int, default=None)
     parser.add_argument("--val_filepath", type=str, default=None)
     parser.add_argument("--test_filepath", type=str, default=None)
-<<<<<<< HEAD
     parser.add_argument("--train_dataset_size",type=int,default=1000000)
     parser.add_argument("--valid_dataset_size",type=int,default=1000000)
     parser.add_argument("--testing_datset_size", type=int,default = 1000000)
-=======
-    parser.add_argument("--train_dataset_size",type=int,default=1e6)
-    parser.add_argument("--valid_dataset_size",type=int,default=1e4)
-    parse.add_argument("--testing_datset_size", type=int,default = 1e4)
->>>>>>> c5b4c2c0f3904c223d61f0c2f3abd26d4d1cb173
     parser.add_argument("--load_best_train", type = bool,default=True)
     parser.add_argument("--load_best_test", type = bool,default=True)
-    parser.add_argument("--pretrained",type=bool,default=False)
-    parser.add_argument("--n_epochs",type=int,default=100)
+    parser.add_argument("--pretrained",type=bool,default=True)
+    parser.add_argument("--n_epochs",type=int,default=1)
     parser.add_argument("--beam_size",type=int,default=1024)
-    
+    parser.add_argument("--batch_size",type=int,default=1)
     opts = parser.parse_args()
     # if the filee names are not specified
-<<<<<<< HEAD
     if opts.train_filepath ==None:
         opts.train_filepath = f"mmwave{opts.num_nodes}_gurobi_multi_proc.txt"
     
@@ -737,16 +741,6 @@ if __name__ == "__main__":
         
     if opts.test_filepath ==  None:
         opts.test_filepath = f"mmwave{opts.num_nodes}_test_Gurobi_multi_proc.txt"
-=======
-    if train_filepath ==None:
-        train_filepath = f"mmwave{num_nodes}_Gurobi_multi_proc.txt"
-    
-    if val_filepath == None:
-        val_filepath = f"mmwave{num_nodes}_val_Gurobi_multi_proc.txt"
-        
-    if test_filepath ==  None:
-        test_filepath = f"mmwave{num_nodes}_test_Gurobi_multi_proc.txt"
->>>>>>> c5b4c2c0f3904c223d61f0c2f3abd26d4d1cb173
         
         
     display_step = 1000
@@ -755,7 +749,7 @@ if __name__ == "__main__":
     beta_2 = 0.999
     c_lambda = 10
     crit_repeats = 5
-    device = 'cuda'
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     val_mse = []
     
     
@@ -770,32 +764,13 @@ if __name__ == "__main__":
     with open('Model_results_summary.txt',"a" , encoding="utf-8") as f:
         
         f.write('Model Parameters')
-<<<<<<< HEAD
         f.write("Number of epochs = " + str(opts.n_epochs))
         f.write("Pretrained = " + str(opts.pretrained))
         f.write("Pre-trained with best = " + str(opts.load_best_train))
         f.write("Tested with best = " + str(opts.load_best_test))
        
-        
-    gen,val_mse = train_model(gen,crit,opts.num_nodes,opts.train_filepath,opts.val_filepath,opts.train_dataset_size,opts.valid_dataset_size,opts.n_epochs,opts.pretrained,opts.load_best_train)
+    
+    gen,val_mse = train_model(gen,crit,opts.num_nodes,opts.batch_size,opts.train_filepath,opts.val_filepath,opts.train_dataset_size,opts.valid_dataset_size,opts.n_epochs,opts.pretrained,opts.load_best_train)
     model_testing(gen,opts.num_nodes, opts.testing_datset_size, opts.beam_size,opts.test_filepath,opts.load_best_test)
-    status = 'train'
-    plot_model_results(np.asarray(val_mse,status)) 
-    
-=======
-        f.write("Number of epochs = " + str(n_epochs))
-        f.write("Pretrained = " + str(pretrained))
-        f.write("Pre-trained with best = " + str(load_best_train))
-        f.write("Tested with best = " + str(load_best_test))
-       
-        
-    gen,val_mse = train_model(gen,crit,train_filepath,val_filepath,train_dataset_size,valid_dataset_size,n_epochs,pretrained,load_best_train)
-    model_testing(gen,num_nodes, testing_datset_size, beam_size,test_filepath,load_best_test)
-    status = 'train'
-    plot_model_results(np.asarray(val_mse,status)) 
-    
-       
-#===============================================================================
-
-
->>>>>>> c5b4c2c0f3904c223d61f0c2f3abd26d4d1cb173
+    #status = 'train'
+    plot_model_results(np.asarray(val_mse),'train') 
