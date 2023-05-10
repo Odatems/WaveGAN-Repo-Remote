@@ -139,7 +139,7 @@ if __name__ == '__main__':
     opts = parser.parse_args()
     
     
-    data_per_core = np.int16(np.floor(opts.num_samples/opts.num_nodes))
+    data_per_core = np.int16(np.floor(opts.num_samples/opts.num_cores))
     set_nodes_coord = np.random.random([opts.num_samples, opts.num_nodes, opts.node_dim])*100
     set_nodes_coord = np.random.randint(min_h, high=opts.max_h, size=(opts.num_samples, opts.num_nodes, opts.node_dim))
     set_nodes_coord[:,:,1] = np.random.randint(min_y, high=opts.max_y, size=(opts.num_samples, opts.num_nodes))
