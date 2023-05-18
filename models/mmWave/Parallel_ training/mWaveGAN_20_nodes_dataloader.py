@@ -233,7 +233,7 @@ def load_dataset(train_filepath,num_nodes = 20,train_test_split = 0.2,batch_size
 #                                                   Training function                                                      #
 #===========================================================================================================================
 
-def train_model(gen,crit,num_nodes,batch_size,train_dataloader,val_dataloader,train_filepath,n_epochs,pretrained=False,load_best=True):
+def train_model(device,gen,crit,num_nodes,batch_size,train_dataloader,val_dataloader,n_epochs,pretrained=False,load_best=True):
   
     '''
     train_filepath: is the file containig training dataset
@@ -255,9 +255,9 @@ def train_model(gen,crit,num_nodes,batch_size,train_dataloader,val_dataloader,tr
     step = 0
     tick_width = 50
     mse_val = []
-    
+   
     mse_per_inst_val = np.zeros((scale_factor*n_epochs, len(val_dataloader.dataset)))
-    
+   
     
     PATH_G = "WGAN_model_Gen.pt" 
     PATH_D = "WGAN_model_Desc.pt"
@@ -310,14 +310,14 @@ def train_model(gen,crit,num_nodes,batch_size,train_dataloader,val_dataloader,tr
     
     
     # training loop over all dataset
-    for epoch in range(2):#scale_factor*n_epochs
+    for epoch in range(n_epochs):#scale_factor*n_epochs
         #torch.cuda.empty_cache()
         #end_index = 0
         #start_index = end_index # find the starting point of the current batch       
         # training loop
-        print('hi')
+        
         for optimal_cost,graph_cost,_,_ in train_dataloader:
-            print(optimal_cost.shape)
+            #print(optimal_cost.shape)
             optimal_cost, graph_cost = optimal_cost.float().to(device), graph_cost.float().to(device)
             mean_iteration_critic_loss = 0
             
@@ -365,7 +365,7 @@ def train_model(gen,crit,num_nodes,batch_size,train_dataloader,val_dataloader,tr
                 plt.imshow(fake[0,0,:,:].detach().cpu().numpy())
                 plt.show()
 
-                plt.imshow(real[0,0,:,:].detach().cpu().numpy())
+                plt.imshow(optimal_cost[0,0,:,:].detach().cpu().numpy())
                 plt.show()
 
                 
@@ -395,23 +395,25 @@ def train_model(gen,crit,num_nodes,batch_size,train_dataloader,val_dataloader,tr
          #-------------------------------------------------------------------------
          # save stats after each epoch 
          #------------------------------------------------------------------------
+        
         gen = gen.to('cpu')
         print('start validation')
-        
-        for valid_optimal_cost,valid_graph_cost,_ ,_ in valid_dataloader:
+        device = 'cpu'
+        for valid_optimal_cost,valid_graph_cost,_ ,_ in val_dataloader:
             
-            valid_optimal_cost,valid_graph_cost = valid_optimal_cost.float().to(device),valid_graph_cost.float().to(device)
+            valid_optimal_cost,valid_graph_cost = valid_optimal_cost.float().to('cpu'),valid_graph_cost.float().to('cpu')
             gen_imgs = gen(valid_graph_cost) # predict
+            
             difference_array = np. subtract(gen_imgs.detach().cpu().numpy(), valid_optimal_cost)
             squared_array = np.square(difference_array)
-            mse_per_inst_val[epoch] = np.mean(squared_array)
+            mse_per_inst_val[epoch] = np.mean(squared_array)# need .numpy() if using the validation over the GPUs
             
           #mse_val[epoch] = mse_per_inst_val[epoch,:].mean()
         mse_val.append(mse_per_inst_val[epoch,:].mean())
         with open('Model_results_summary.txt',"a" , encoding="utf-8") as f:
               f.write("Validation mean square error = "+ str(mse_val[epoch])) # store the validation mean square error 
         print(f'Epoch {epoch}/{n_epochs}:----training mse = , validation mse = {mse_val[epoch]}, Generator loss: {np.array(generator_losses_epoch).mean()}, critic loss: {np.array(critic_losses_epoch).mean()}')
-          
+        device = 'cuda'
         if (epoch>0):# if this is not the first epoch
           
               if (mse_val[epoch] < mse_best):
@@ -452,7 +454,7 @@ def train_model(gen,crit,num_nodes,batch_size,train_dataloader,val_dataloader,tr
            },PATH_D_Best)
            mse_best = mse_val[epoch]
       
-        
+        device = 'cuda'
         gen = gen.to('cuda')
          # save the generator model 
         torch.save({
@@ -484,25 +486,17 @@ def train_model(gen,crit,num_nodes,batch_size,train_dataloader,val_dataloader,tr
 #                       Testing Function 
 #==============================================================================
 
-def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_filepath = None,load_best=True):
+def model_testing(gen,device,test_dataloader,num_nodes, beam_size = 1280,test_filepath = None,load_best=True):
     
-    device = 'cpu'
-    gen = gen.to('cpu')
+    
+    testing_datset_size = len(test_dataloader.dataset)
+    gen = gen.to(device)
     num_neighbors= -1
     batch_size= 1
-    org_cost = np.zeros((testing_datset_size,1,num_nodes,num_nodes)) # changed to match pytorch 
-    z_norm_test = np.zeros((testing_datset_size,1,num_nodes,num_nodes)) # changed to match pytorch 
-    optimal_cost = np.zeros((testing_datset_size,1,num_nodes,num_nodes))
-    optimal_tour_nodes =  np.zeros((testing_datset_size,num_nodes))
-    optimal_tour_len = np.zeros((testing_datset_size,1))
-    xx_test = np.zeros((testing_datset_size ,1,num_nodes,num_nodes))
     dtypeFloat = torch.FloatTensor
     dtypeLong = torch.LongTensor
-    torch.manual_seed(1)
-    batch_size = 1
     beam_search_edge = np.zeros((num_nodes,num_nodes))
-    zzz = np.zeros((1,1,num_nodes,num_nodes))
-    xxx = np.zeros((1,1,num_nodes,num_nodes))
+    
     tour_is_valid = np.zeros((testing_datset_size,1))
     gen_tour_len = np.zeros((testing_datset_size,1))
     optimality_gap = np.zeros((testing_datset_size,1))
@@ -552,12 +546,9 @@ def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_file
     # read the dataset
     if test_filepath == None:
         test_filepath = f"mmwave{num_nodes}_test_Gurobi.txt"
-    
-    dataset = GurobiTSPReader(num_nodes, num_neighbors, batch_size, test_filepath)
-    i = iter(dataset)
-    print("Number of batches of size {}: {}".format(batch_size, dataset.max_iter))
-    
+        
     # Extract testing data
+    '''
     for itr_num in range( np.int32(testing_datset_size)):
         
         next_batch = next(i)
@@ -565,32 +556,19 @@ def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_file
         z_norm_test[itr_num] = next_batch.edges_values # store the cost matrix.
         optimal_tour_len[itr_num]=next_batch.tour_len # store the optimal tour length 
         optimal_tour_nodes[itr_num] = next_batch.tour_nodes # store the final optimal tour 
- 
+    '''
+    
     print(f'Testing phase starts, test datset size = {testing_datset_size}, number of nodes = {num_nodes}')
     # Inference loop
     start = time.time()
-    for i in range(testing_datset_size):#
-
-  
-        beam_search_edge = np.zeros((num_nodes,num_nodes))
-        zzz[0,:,:,:] = z_norm_test[i+shift_index] 
-        zzz_test = torch.from_numpy(zzz).float()
-        zzz_test = zzz_test.to(device)
-        xxx[0,:,:,:] = xx_test[i+shift_index]
-        xxx_test = torch.from_numpy(xxx).float()
-        xxx_test = xxx_test.to(device)       
+    for optimal_cost,graph_cost,optimal_tour_len,optimal_tour_nodes in test_dataloader:
         
-        fake_test = gen(zzz_test) 
-        y_preds = fake_test[:,:,:,:]#.
-      
-        cost_values = z_norm_test[i+shift_index,0,:,:]
-        # Beam Search
-        bs_nodes,tour_is_valid[i] = beamsearch_tour_nodes_shortest(y_preds, cost_values, beam_size, batch_size, num_nodes,
+        optimal_cost, graph_cost,optimal_tour_len,optimal_tour_nodes = optimal_cost.float().to(device), graph_cost.float().to(device),optimal_tour_len.float().to(device),optimal_tour_nodes.float().to(device)
+        fake_test = gen(graph_cost) 
+        
+        
+        bs_nodes,tour_is_valid[i] = beamsearch_tour_nodes_shortest(fake_test, graph_cost, beam_size, batch_size, num_nodes,
                                        dtypeFloat, dtypeLong, probs_type='logits', random_start=False)
-        
-        
-        cur_node_to_investigate = i # the graph to which we compute the generated output 
-        
         f = bs_nodes.tolist()
         final_tour = f[0]
         generated_final_tour[i] = final_tour
@@ -599,8 +577,8 @@ def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_file
             
             index_1 = int(final_tour[k])
             index_2 = int(final_tour[k+1])
-            gen_tour_len = gen_tour_len + cost_values[index_1][index_2]  
-            cnr = cost_values[index_1][index_2]
+            gen_tour_len = gen_tour_len + graph_cost[index_1][index_2]  
+            cnr = graph_cost[index_1][index_2]
             rate_values_gen[k] = bandwidth*np.log2(1+power*cnr)
             beam_search_edge[index_1][index_2] = 1
             beam_search_edge[index_2][index_1] = 1
@@ -608,13 +586,13 @@ def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_file
         index_1 = int(final_tour[num_nodes - 1])
         start_node_of_tour = 0 # this is the starting node in the tour 
         index_2 = start_node_of_tour    
-        cnr = cost_values[index_1][index_2] 
+        cnr = graph_cost[index_1][index_2] 
         rate_values_gen[k+1] = bandwidth*np.log2(1+power*cnr)
         optimal_rate[i] = np.min(rate_values_gen)
         beam_search_edge[index_1][index_2] = 1
         beam_search_edge[index_2][index_1] = 1
         
-        gen_tour_len_beam_search[i] = gen_tour_len + cost_values[index_1][index_2]     
+        gen_tour_len_beam_search[i] = gen_tour_len + graph_cost[index_1][index_2]     
     
         # find the gap between the searched path length and the optimal one
         optimality_gap_in_cost[i] =  np.absolute(1 - (optimal_tour_len[cur_node_to_investigate+shift_index]/gen_tour_len_beam_search[i])) # absolute value of the rate becasue we might have negative
@@ -629,13 +607,13 @@ def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_file
         for k in range(num_nodes-1): # range number of (nodes - 1)       
             index_1 = int(final_tour[k])
             index_2 = int(final_tour[k+1])  
-            cnr = cost_values[index_1][index_2]
+            cnr = graph_cost[index_1][index_2]
             rate_values[k] = bandwidth*np.log2(1+power*cnr)
                
         index_1 = int(final_tour[num_nodes - 1])
         start_node_of_tour = 0 # this is the starting node in the tour 
         index_2 = start_node_of_tour    
-        cnr = cost_values[index_1][index_2] 
+        cnr = graph_cost[index_1][index_2] 
         rate_values[k+1] = bandwidth*np.log2(1+power*cnr)
         Gurobi_optimal_rate[i] = np.min(rate_values)
         
@@ -643,7 +621,7 @@ def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_file
         optimality_gap_in_thr[i] = optimality_gap_in_thr[i]*100
        
     end_time =  time.time() - start
-    #device = 'cuda'
+   
     print(f'End of the testing phase; Optimality gap in cost values = {np.mean(optimality_gap_in_cost)}, Optimality gap in throughput = {np.mean(optimality_gap_in_thr)}')
     
     with open('Model_results_summary.txt',"a" , encoding="utf-8") as f:
@@ -656,6 +634,7 @@ def model_testing(gen,num_nodes, testing_datset_size, beam_size = 1280,test_file
        f.write("Optimality gap in throughput = "+ str(np.mean(optimality_gap_in_thr)))
        f.write("Optimality gap in cost matrix values = "+ str((np.mean(optimality_gap_in_cost)))) # this might be different because of the differences in the cost matrix 
        f.write("Final netowrk topology = "+ str(final_tour)) # the final tour generated after beam search
+       
 
 #==============================================================================
 #                   plot results
@@ -712,7 +691,7 @@ if __name__ == "__main__":
     opts = parser.parse_args()
     # if the filee names are not specified
     if opts.train_filepath ==None:
-        opts.train_filepath = f"mmwave{opts.num_nodes}_gurobi_multi_proc.txt"
+        opts.train_filepath = f"mmwave22692_Gurobi20_sum_th.txt"#f"mmwave{opts.num_nodes}_gurobi_multi_proc.txt"
     
         
     if opts.test_filepath ==  None:
@@ -725,7 +704,7 @@ if __name__ == "__main__":
     beta_2 = 0.999
     c_lambda = 10
     crit_repeats = 5
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     val_mse = []
     train_test_split = 0.2
     #batch_size = 128
@@ -735,8 +714,8 @@ if __name__ == "__main__":
     gen_opt = torch.optim.Adam(gen.parameters(), lr=lr, betas=(beta_1, beta_2))
     crit_opt = torch.optim.Adam(crit.parameters(), lr=lr, betas=(beta_1, beta_2))
     
-    gen = nn.DataParallel(gen.apply(weights_init))
-    crit = nn.DataParallel(crit.apply(weights_init))
+    gen = nn.DataParallel(gen.apply(weights_init)).cuda()
+    crit = nn.DataParallel(crit.apply(weights_init)).cuda()
     
     with open('Model_results_summary.txt',"a" , encoding="utf-8") as f:
         
@@ -747,8 +726,8 @@ if __name__ == "__main__":
         f.write("Tested with best = " + str(opts.load_best_test))
     #train_filepath = r"C:\Users\eo2fg\Concorde_mmwave10_log_sum_obj_core0.txt"  
     train_dataloader,val_dataloader,test_dataloader  = load_dataset(opts.train_filepath,opts.num_nodes,train_test_split,opts.batch_size)
-    gen,val_mse = train_model(gen,crit,opts.num_nodes,opts.batch_size,train_dataloader,val_dataloader,opts.n_epochs,opts.pretrained,opts.load_best_train)
-    #(gen,opts.num_nodes, opts.testing_datset_size, opts.beam_size,opts.test_filepath,opts.load_best_test)
+    gen,val_mse = train_model(device,gen,crit,opts.num_nodes,opts.batch_size,train_dataloader,val_dataloader,opts.n_epochs,opts.pretrained,opts.load_best_train)
+    model_testing(gen,device,test_dataloader,opts.num_nodes, opts.beam_size,opts.load_best_test)
     #status = 'train'
     plot_model_results(np.asarray(val_mse),'train') 
 
