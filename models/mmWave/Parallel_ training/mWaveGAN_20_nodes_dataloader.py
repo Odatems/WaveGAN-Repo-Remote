@@ -561,6 +561,7 @@ def model_testing(gen,device,test_dataloader,num_nodes, beam_size = 1280,test_fi
     print(f'Testing phase starts, test datset size = {testing_datset_size}, number of nodes = {num_nodes}')
     # Inference loop
     start = time.time()
+    i = 0
     for optimal_cost,graph_cost,optimal_tour_len,optimal_tour_nodes in test_dataloader:
         
         optimal_cost, graph_cost,optimal_tour_len,optimal_tour_nodes = optimal_cost.float().to(device), graph_cost.float().to(device),optimal_tour_len.float().to(device),optimal_tour_nodes.float().to(device)
@@ -595,7 +596,7 @@ def model_testing(gen,device,test_dataloader,num_nodes, beam_size = 1280,test_fi
         gen_tour_len_beam_search[i] = gen_tour_len + graph_cost[index_1][index_2]     
     
         # find the gap between the searched path length and the optimal one
-        optimality_gap_in_cost[i] =  np.absolute(1 - (optimal_tour_len[cur_node_to_investigate+shift_index]/gen_tour_len_beam_search[i])) # absolute value of the rate becasue we might have negative
+        optimality_gap_in_cost[i] =  np.absolute(1 - (optimal_tour_len[i]/gen_tour_len_beam_search[i])) # absolute value of the rate becasue we might have negative
         optimality_gap_in_cost[i] = optimality_gap[i]*100
        
         
@@ -619,7 +620,9 @@ def model_testing(gen,device,test_dataloader,num_nodes, beam_size = 1280,test_fi
         
         optimality_gap_in_thr[i] =  np.absolute(1 - (Gurobi_optimal_rate[i]/optimal_rate[i])) 
         optimality_gap_in_thr[i] = optimality_gap_in_thr[i]*100
-       
+        
+        i = i + 1
+        
     end_time =  time.time() - start
    
     print(f'End of the testing phase; Optimality gap in cost values = {np.mean(optimality_gap_in_cost)}, Optimality gap in throughput = {np.mean(optimality_gap_in_thr)}')
