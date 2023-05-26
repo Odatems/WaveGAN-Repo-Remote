@@ -155,7 +155,7 @@ def beamsearch_tour_nodes_shortest(y_pred_edges, x_edges_values, beam_size, batc
         #y = torch.log(y_pred_edges) 
         # Consider the second dimension only
         #y = y_pred_edges commmented now 
-        print('y is equal to = ', y)
+        #print('y is equal to = ', y)
         y = y[0, :, :, :]  # B x V x V
         #print('y values are = ', y)
         
@@ -187,7 +187,7 @@ def beamsearch_tour_nodes_shortest(y_pred_edges, x_edges_values, beam_size, batc
         for idx in range(len(hyp_tours)):
             hyp_nodes = hyp_tours[idx].cpu().numpy()
             hyp_len = tour_nodes_to_tour_len(hyp_nodes, x_edges_values)# by enas .cpu().numpy()
-            print(hyp_len)
+            #print(hyp_len)
             # Replace tour in shortest_tours if new length is shorter than current best
             if hyp_len > shortest_lens[idx] and is_valid_tour(hyp_nodes, num_nodes):
                 shortest_tours[idx] = hyp_tours[idx]

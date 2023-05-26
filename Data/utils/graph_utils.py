@@ -22,8 +22,8 @@ def tour_nodes_to_W(nodes):
 def tour_nodes_to_tour_len(nodes, W_values):
     """Helper function to calculate tour length from ordered list of tour nodes.
     """
-    print(nodes)
-    print(W_values.shape)
+    #print(nodes)
+    #print(W_values.shape)
     tour_len = 0
     for idx in range(len(nodes) - 1):
         i = nodes[idx]

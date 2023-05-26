@@ -93,7 +93,7 @@ class Beamsearch(object):
         # Get top k scores and indexes (k = beam_size)
         bestScores, bestScoresId = beam_lk.topk(self.beam_size, 1, True, True)
         #print('best score is = ', bestScores)
-        print('best score ID is = ', bestScoresId)
+        #print('best score ID is = ', bestScoresId)
         # Update scores
         self.scores = bestScores
         # Update backpointers
@@ -105,7 +105,7 @@ class Beamsearch(object):
         #print('previous prev_k = ', prev_k)
         #print('new nodes are the modulus = ', new_nodes)
         self.next_nodes.append(new_nodes)
-        print('next nodes series is = ', self.next_nodes)
+        #print('next nodes series is = ', self.next_nodes)
         # Re-index mask
         perm_mask = prev_k.type(torch.int64).unsqueeze(2).expand_as(self.mask)  # (batch_size, beam_size, num_nodes)
         
