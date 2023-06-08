@@ -138,19 +138,5 @@ if __name__ == '__main__':
     procs = []
     shift_val = 0
     
-    with mp.Pool(20) as pool:     
+    with mp.Pool(opts.num_cores) as pool:     
      pool.map(solve_model,set_nodes_coord,chunksize=1)
-	
-    #solve_model(set_nodes_coord)	
-    
-    '''
-    for i in range(opts.num_cores):
-       
-       
-        process = mp.Process(target=solve_model,args= [(opts.fun_type,i,opts.num_nodes,set_nodes_coord[i*data_per_core:(i+1)*data_per_core])])
-        procs.append(process)
-        process.start()
-   
-    for proc in procs:
-        proc.join()
-    '''
