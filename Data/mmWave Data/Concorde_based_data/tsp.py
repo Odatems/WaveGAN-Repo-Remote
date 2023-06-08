@@ -78,7 +78,7 @@ class TSPSolver(object):
     
     
     #-----------------@Enas --------------------------------------------
-    def solve_mat(self, dist,num_nodes,time_bound=-1, verbose=True, random_seed=0):
+    def solve_mat(self, dist,num_nodes,time_bound=0.001, verbose=True, random_seed=1):
         
         name = str(uuid.uuid4().hex)[0:9]
         res = _CCtsp_solve_mat(
