@@ -14,8 +14,8 @@ np.random.seed(1)
 num_odes = 20
 def solve_model(input_data):#,*args):
     
-    print(input_data.shape)
-    fun_type = 2
+    #print(input_data.shape)
+    fun_type = 1
     
     core_id = os.getpid()
     num_nodes = 20
@@ -37,10 +37,10 @@ def solve_model(input_data):#,*args):
     p_fso = 10**(-3)
     N_b = 67885
     C=299792458    # light speed
-    k_planck_const = 6.626*10(-34)
+    k_planck_const = 6.626*10**(-34)
     lamda = 1550*10**(-9)
     E_p = k_planck_const*C/lamda
-    gamma = 10**(1/10)*10**3 # I converted from km to meter. 
+    gamma = 10**(1/10)*10**(-3) # I converted from km to meter. 
     omega = 42.5 *10**(-3)
     tau_fso_tx = 0.9
     tau_fso_rx = 0.7
@@ -67,19 +67,21 @@ def solve_model(input_data):#,*args):
             #Y = set_nodes_coord[i,rx_node,:]
             
             L = np.sqrt((X[0]-Y[0])**2+(X[1]-Y[1])**2+(X[2]-Y[2])**2) # Euclidan distance
-            rate_values = (p_fso * tau_fso_tx*tau_fso_rx*(10**(-gamma*L/10)*omega))/(np.pi*(epsilon/2)**2 * L**2*E_p*N_b)
+            rate_fso = (p_fso * tau_fso_tx*tau_fso_rx*(10**(-gamma*L/10)*omega))/(np.pi*(epsilon/2)**2 * L**2*E_p*N_b)
             
             D = np.sqrt((X[0]-Y[0])**2+(X[1]-Y[1])**2+(X[2]-Y[2])**2) # Euclidan distance
            
             #===================================End of the channel model================================================
-            coeff_matrix[tx_node,rx_node] = rate_values
-            coeff_matrix[rx_node,tx_node] = rate_values
+            coeff_matrix[tx_node,rx_node] = rate_fso
+            coeff_matrix[rx_node,tx_node] = rate_fso 
+            #print(rate_values)
             #print(coeff_matrix[rx_node,tx_node])
         # normalize between 0 and 1
-        coeff_matrix_normalized = (coeff_matrix - np.min(coeff_matrix))/(np.max(coeff_matrix) - np.min(coeff_matrix))#*100  
-        
+        #coeff_matrix_normalized 
+        rate_values = (coeff_matrix - np.min(coeff_matrix))/(np.max(coeff_matrix) - np.min(coeff_matrix))#*100  
+        #print(coeff_matrix_normalized)
         #dist =  -rate_values
-        print('hello world')
+        #print('hello world')
         if fun_type == 1:  
             solution = solver_pid.solve_mat(-rate_values,num_nodes)
         elif fun_type == 2:
@@ -93,7 +95,7 @@ def solve_model(input_data):#,*args):
         # Step 4: Write the cost matrix and the solution to text file
         with open(filename, "a") as f:
            
-            f.write( " ".join( str(coeff_matrix_normalized[row_idx,col_idx])+str(" ") for row_idx,col_idx in combinations(nodes, 2)))
+            f.write( " ".join( str(rate_values[row_idx,col_idx])+str(" ") for row_idx,col_idx in combinations(nodes, 2)))
             f.write( str(" ") + str('output') + str(" ") )
             f.write( str(" ").join( str(node_idx+1) for node_idx in solution.tour))
             f.write( str(" ") + str(solution.tour[0]+1) + str(" ") )
@@ -120,7 +122,7 @@ if __name__ == '__main__':
     parser.add_argument("--max_y", type=int, default=500)
     parser.add_argument("--max_h", type=int, default=200)
     parser.add_argument("--filename", type=str, default=None)
-    parser.add_argument("--fun_type", type=int, default=2)
+    parser.add_argument("--fun_type", type=int, default=1)
     opts = parser.parse_args()
    
    
@@ -140,3 +142,5 @@ if __name__ == '__main__':
     
     with mp.Pool(opts.num_cores) as pool:     
      pool.map(solve_model,set_nodes_coord,chunksize=1)
+	
+    
